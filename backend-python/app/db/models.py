@@ -11,5 +11,7 @@ class Document(Base):
     __tablename__ = "documents"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    content: Mapped[str] = mapped_column(String, nullable=False)
-    embedding: Mapped[list] = mapped_column(JSON)
+    content: Mapped[str] = mapped_column(String, nullable=True)
+    embedding: Mapped[list] = mapped_column(JSON, nullable=True)
+    num_chunks: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    vector_ids: Mapped[list] = mapped_column(JSON, nullable=False)
