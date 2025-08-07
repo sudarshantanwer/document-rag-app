@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.ingest import router as ingest_router
 from app.routes.query import router as query_router
 from app.routes.select_docs import router as select_docs_router
+from app.routes.documents import router as documents_router
 
 app = FastAPI()
 
@@ -19,3 +20,4 @@ app.add_middleware(
 app.include_router(ingest_router)
 app.include_router(query_router)
 app.include_router(select_docs_router)
+app.include_router(documents_router)
