@@ -23,7 +23,7 @@ async def ingest_document(file):
     # Parse file content
     if suffix == ".txt":
         with open(tmp_path, "r", encoding="utf-8") as f:
-            text = f.read()
+            text = f.read() 
     elif suffix == ".pdf":
         from PyPDF2 import PdfReader
         reader = PdfReader(tmp_path)
@@ -50,13 +50,19 @@ async def ingest_document(file):
         embedding_function=embeddings,
         collection_name="documents"
     )
-    ids = vectorstore.add_texts(docs)
 
-    # Store metadata in DB
+    # Store metadata in DB and get document id
     async with async_session() as session:
         async with session.begin():
-            doc = Document(filename=file.filename, num_chunks=len(docs), vector_ids=ids)
+            doc = Document(filename=file.filename, num_chunks=len(docs), vector_ids=[])
             session.add(doc)
+            await session.flush()  # get doc.id
+            document_id = str(doc.id)
+
+            # Add document_id metadata to each chunk
+            metadatas = [{"document_id": document_id} for _ in docs]
+            ids = vectorstore.add_texts(docs, metadatas=metadatas)
+            doc.vector_ids = ids
 
     os.remove(tmp_path)
     return {"status": "success", "filename": file.filename, "chunks": len(docs)}

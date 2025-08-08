@@ -24,8 +24,13 @@ async def query_documents(payload):
         collection_name="documents"
     )
 
-    # Similarity search (increase k for more context)
-    docs = vectorstore.similarity_search(question, k=10)
+    # Restrict search to selected document if doc_id is provided
+    doc_id = payload.get("doc_id")
+    filter_kwargs = {}
+    if doc_id:
+        # PGVector filter expects metadata, so we filter by document id in metadata
+        filter_kwargs = {"metadata": {"document_id": doc_id}}
+    docs = vectorstore.similarity_search(question, k=10, **filter_kwargs)
     context = "\n".join([doc.page_content for doc in docs])
 
     # Truncate context to fit model's max token limit (approx 200 words)
