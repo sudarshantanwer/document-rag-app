@@ -9,6 +9,7 @@ const API_BASE = 'http://localhost:8000'; // Change if needed
 
 
 function App() {
+  const loadingRef = React.useRef(null);
   const [file, setFile] = useState(null);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -56,6 +57,11 @@ function App() {
       return;
     }
     setLoading(true);
+    setTimeout(() => {
+      if (loadingRef.current) {
+        loadingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100); // allow loading to render
     const res = await fetch(`${API_BASE}/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -81,6 +87,7 @@ function App() {
   return (
     <div className="custom-bg">
       <div className="custom-card">
+        <img src="/src/assets/ai-logo.svg" alt="AI Logo" style={{width: 80, height: 80, marginBottom: 16}} />
         <h2 className="custom-title">Document-RAG Demo</h2>
 
         {/* Ingest Document */}
@@ -130,7 +137,12 @@ function App() {
           </div>
         </section>
 
-        {loading && <div className="custom-loading">Loading...</div>}
+        {loading && (
+          <div className="custom-loading" ref={loadingRef}>
+            <div className="loader-spinner" />
+            <div style={{marginTop: 12}}>Loading...</div>
+          </div>
+        )}
       </div>
     </div>
   );

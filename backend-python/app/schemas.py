@@ -1,0 +1,25 @@
+from pydantic import BaseModel
+from typing import Optional
+
+class QueryRequest(BaseModel):
+    question: str
+    doc_id: Optional[str] = None
+
+class QueryResponse(BaseModel):
+    answer: str
+    context: Optional[str] = None
+
+
+class IngestResponse(BaseModel):
+    status: str
+    filename: str
+    chunks: int
+    message: Optional[str] = None
+
+class SelectDocsRequest(BaseModel):
+    doc_ids: list[str]
+
+class SelectDocsResponse(BaseModel):
+    status: str
+    selected: list[str]
+    message: Optional[str] = None
