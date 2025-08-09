@@ -18,8 +18,6 @@ body, html {
   padding: 0;
   font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
   background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%);
-}
-
 .custom-card {
   background: #e6f0fa;
   border-radius: 18px;
@@ -43,12 +41,12 @@ body, html {
 
 .custom-section {
   width: 100%;
-  background: linear-gradient(90deg, #e0ffe9 0%, #e0fff7 100%);
+  background: #fff;
   border-radius: 1.2rem;
   padding: 1.5rem;
   margin-bottom: 2rem;
   box-shadow: 0 2px 8px 0 rgba(67,233,123,0.08);
-  border: 1.5px solid #b2f7ef;
+  border: 1.5px solid #bdbdbd;
 }
 
 .custom-section-title {
@@ -110,11 +108,11 @@ body, html {
 .custom-answer-box {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: linear-gradient(90deg, #e0fff7 0%, #e0ffe9 100%);
+  background: #fff;
   border-radius: 1rem;
   min-height: 60px;
-  border: 1.5px solid #b2f7ef;
-  box-shadow: 0 1px 4px #b2f7ef33;
+  border: 1.5px solid #bdbdbd;
+  box-shadow: 0 1px 4px #bdbdbd33;
 }
 .custom-answer-label {
   font-weight: 600;
