@@ -20,6 +20,4 @@ class SelectDocsRequest(BaseModel):
     doc_ids: list[str]
 
 class SelectDocsResponse(BaseModel):
-    status: str
-    selected: list[str]
-    message: Optional[str] = None
+    selected_docs: list[str]

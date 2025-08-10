@@ -13,3 +13,12 @@ huggingface-hub
 python-multipart
 PyPDF2
 sentence-transformers
+
+# Testing dependencies
+pytest
+pytest-asyncio
+pytest-mock
+httpx
+pytest-cov
+factory-boy
+faker
