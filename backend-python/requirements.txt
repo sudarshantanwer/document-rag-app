@@ -2,9 +2,14 @@ fastapi
 uvicorn[standard]
 sqlalchemy[asyncio]
 asyncpg
+psycopg2-binary
 python-dotenv
 pgvector
 langchain
+langchain-community
 llama-index
 openai
 huggingface-hub
+python-multipart
+PyPDF2
+sentence-transformers

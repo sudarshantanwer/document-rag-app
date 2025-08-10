@@ -12,8 +12,8 @@ class QueryResponse(BaseModel):
 
 class IngestResponse(BaseModel):
     status: str
-    filename: str
-    chunks: int
+    filename: Optional[str] = None
+    chunks: Optional[int] = None
     message: Optional[str] = None
 
 class SelectDocsRequest(BaseModel):

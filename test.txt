@@ -1,0 +1,7 @@
+This is a test document for the RAG application.
+
+It contains some sample text that will be split into chunks and stored in the vector database.
+
+The document ingestion process should parse this text, create embeddings, and store them in PostgreSQL with pgvector.
+
+This allows for semantic search and retrieval when users ask questions about the content.
