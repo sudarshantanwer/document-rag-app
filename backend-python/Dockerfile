@@ -11,9 +11,16 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements first for better caching
 COPY requirements.txt .
+COPY requirements-prod.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Use production requirements for enhanced performance features
+ARG INSTALL_PROD=false
+RUN if [ "$INSTALL_PROD" = "true" ] ; then \
+        pip install --no-cache-dir -r requirements-prod.txt ; \
+    else \
+        pip install --no-cache-dir -r requirements.txt ; \
+    fi
 
 # Copy application code
 COPY . .

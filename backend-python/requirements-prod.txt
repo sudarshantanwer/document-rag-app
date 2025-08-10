@@ -1,0 +1,14 @@
+# Production requirements with all performance optimizations
+-r requirements.txt
+
+# Enhanced Rate Limiting & Caching
+slowapi
+redis
+aioredis
+
+# Production ASGI server
+gunicorn
+
+# Production monitoring (optional)
+# prometheus-client
+# structlog
