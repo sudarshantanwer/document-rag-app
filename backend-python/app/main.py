@@ -11,10 +11,12 @@ from app.routes.ingest import router as ingest_router
 from app.routes.query import router as query_router
 from app.routes.select_docs import router as select_docs_router
 from app.routes.documents import router as documents_router
+from app.routes.health import router as health_router
 from app.db.models import Base
 from app.db.session import engine
 from app.middleware.performance import PerformanceMiddleware, AsyncLimitMiddleware
 from app.middleware.rate_limiting import redis_limiter
+from app.services.cache_service import cache_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,10 +36,16 @@ async def lifespan(app: FastAPI):
     # Initialize Redis rate limiter
     await redis_limiter.connect()
     
+    # Initialize Redis cache service
+    await cache_service.connect()
+    
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down FastAPI Document-RAG Backend")
+    
+    # Cleanup Redis connections
+    await cache_service.disconnect()
     if redis_limiter.redis_client:
         await redis_limiter.redis_client.close()
 
@@ -96,3 +104,4 @@ app.include_router(ingest_router)
 app.include_router(query_router)
 app.include_router(select_docs_router)
 app.include_router(documents_router)
+app.include_router(health_router, prefix="/admin")

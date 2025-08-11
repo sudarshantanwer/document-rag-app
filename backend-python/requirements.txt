@@ -7,6 +7,9 @@ python-dotenv
 pgvector
 langchain
 langchain-community
+langchain-huggingface
+langchain-openai
+langchain-core
 llama-index
 openai
 huggingface-hub
@@ -17,8 +20,7 @@ sentence-transformers
 # Performance & Rate Limiting (Optional)
 # Uncomment these for enhanced rate limiting and caching
 # slowapi
-# redis
-# aioredis
+redis[hiredis]
 asyncio-throttle
 
 # Testing dependencies

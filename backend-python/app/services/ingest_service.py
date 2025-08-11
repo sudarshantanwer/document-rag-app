@@ -1,14 +1,17 @@
 from app.db.models import Document
 from app.db.session import async_session
+from app.services.cache_service import cache_service
+from app.utils.cached_embeddings import create_cached_embeddings
 # from langchain.embeddings import OpenAIEmbeddings, HuggingFaceEmbeddings
 # from langchain.text_splitter import TextSplitter
 # from langchain.vectorstores.pgvector import PGVector
 
 import os
 from tempfile import NamedTemporaryFile
-from langchain.embeddings import OpenAIEmbeddings, HuggingFaceEmbeddings
+from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores.pgvector import PGVector
+from langchain_community.vectorstores.pgvector import PGVector
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Document
 from app.db.session import async_session
@@ -36,9 +39,10 @@ async def ingest_document(file):
         os.remove(tmp_path)
         return {"status": "error", "message": "Unsupported file type"}
 
-    # Generate embeddings (choose model)
-    # embeddings = OpenAIEmbeddings()  # or HuggingFaceEmbeddings()
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    # Generate embeddings with caching (choose model)
+    # base_embeddings = OpenAIEmbeddings()  # or HuggingFaceEmbeddings()
+    base_embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = create_cached_embeddings(base_embeddings, "sentence-transformers/all-MiniLM-L6-v2")
 
     # Split text
     splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
@@ -64,5 +68,9 @@ async def ingest_document(file):
             ids = vectorstore.add_texts(docs, metadatas=metadatas)
             doc.vector_ids = ids
 
+    # Invalidate any cached queries since we've added new content
+    # Note: We can't invalidate specific queries, so we'll rely on TTL
+    # In a production system, you might want to implement more sophisticated cache invalidation
+    
     os.remove(tmp_path)
     return {"status": "success", "filename": file.filename, "chunks": len(docs)}

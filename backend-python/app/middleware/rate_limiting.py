@@ -1,5 +1,6 @@
 import asyncio
 import time
+import os
 from typing import Dict, Optional
 from fastapi import Request, HTTPException
 import logging
@@ -106,7 +107,7 @@ class RedisRateLimiter:
 
 # Global rate limiter instance
 rate_limiter = InMemoryRateLimiter()
-redis_limiter = RedisRateLimiter()
+redis_limiter = RedisRateLimiter(os.getenv("REDIS_URL", "redis://localhost:6379"))
 
 # SlowAPI limiter for decorator-based rate limiting (optional)
 if SLOWAPI_AVAILABLE:
