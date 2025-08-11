@@ -38,6 +38,11 @@ function App() {
   const handleIngest = async () => {
     if (!file) return;
     setLoading(true);
+    setTimeout(() => {
+      if (loadingRef.current) {
+        loadingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100); // allow loading to render
     const formData = new FormData();
     formData.append('file', file);
     const res = await fetch(`${API_BASE}/ingest`, {
@@ -75,6 +80,11 @@ function App() {
   const handleSelectDocs = async () => {
     if (!selectedDoc) return;
     setLoading(true);
+    setTimeout(() => {
+      if (loadingRef.current) {
+        loadingRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100); // allow loading to render
     const res = await fetch(`${API_BASE}/select-docs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

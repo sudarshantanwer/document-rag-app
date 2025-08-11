@@ -403,28 +403,408 @@ See [CACHING.md](./CACHING.md) for detailed implementation details.
 
 ## 🚀 Deployment
 
-### Production Docker Build
-```bash
-# Build with production features
-docker build --build-arg INSTALL_PROD=true -t document-rag-backend-prod ./backend-python
+### 🐳 Docker Compose Production (Recommended)
 
-# Run with production settings
-docker run -p 8000:8000 \
-  -e DATABASE_URL="your-db-url" \
-  -e OPENAI_API_KEY="your-api-key" \
-  -e REDIS_URL="your-redis-url" \
-  document-rag-backend-prod
+#### **1. Production Environment Setup**
+```bash
+# Clone the repository
+git clone https://github.com/sudarshantanwer/document-rag-app.git
+cd document-rag-app
+
+# Create production environment file
+cp example.env .env.prod
+
+# Edit production environment
+nano .env.prod
 ```
 
-### Production Checklist
+**Required Environment Variables for Production:**
+```bash
+# .env.prod
+DATABASE_URL=postgresql+asyncpg://postgres:your_secure_password@db:5432/postgres
+PGVECTOR_CONN=postgresql+psycopg2://postgres:your_secure_password@db:5432/postgres
+REDIS_URL=redis://redis:6379/0
+OPENAI_API_KEY=your_openai_api_key
+HUGGINGFACEHUB_API_TOKEN=your_huggingface_token
+
+# Production settings
+ENVIRONMENT=production
+ENABLE_CACHING=true
+ENABLE_RATE_LIMITING=true
+REDIS_TTL=3600
+MAX_CONCURRENT_REQUESTS=50
+QUERY_RATE_LIMIT=20
+INGEST_RATE_LIMIT=10
+```
+
+#### **2. Deploy with Docker Compose**
+```bash
+# Start production services
+docker-compose --env-file .env.prod up -d
+
+# Check service health
+docker-compose ps
+
+# View logs
+docker-compose logs -f backend
+
+# Scale backend if needed
+docker-compose up -d --scale backend=3
+```
+
+### ☁️ Cloud Platform Deployment
+
+#### **AWS ECS (Elastic Container Service)**
+
+**1. Build and Push Images:**
+```bash
+# Build production images
+docker build -t your-registry/document-rag-backend:latest ./backend-python
+docker build -t your-registry/document-rag-frontend:latest ./frontend-react
+
+# Push to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin your-account.dkr.ecr.us-east-1.amazonaws.com
+docker tag your-registry/document-rag-backend:latest your-account.dkr.ecr.us-east-1.amazonaws.com/document-rag-backend:latest
+docker push your-account.dkr.ecr.us-east-1.amazonaws.com/document-rag-backend:latest
+```
+
+**2. ECS Task Definition:**
+```json
+{
+  "family": "document-rag-app",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "containerDefinitions": [
+    {
+      "name": "backend",
+      "image": "your-account.dkr.ecr.us-east-1.amazonaws.com/document-rag-backend:latest",
+      "portMappings": [{"containerPort": 8000}],
+      "environment": [
+        {"name": "DATABASE_URL", "value": "postgresql://..."},
+        {"name": "REDIS_URL", "value": "redis://..."},
+        {"name": "OPENAI_API_KEY", "value": "..."}
+      ]
+    }
+  ]
+}
+```
+
+**3. Required AWS Resources:**
+- **RDS PostgreSQL** with pgvector extension
+- **ElastiCache Redis** for caching
+- **Application Load Balancer** for traffic distribution
+- **ECS Service** with auto-scaling
+- **CloudWatch** for monitoring
+
+#### **Google Cloud Platform (GCP)**
+
+**1. Deploy to Cloud Run:**
+```bash
+# Build and deploy backend
+gcloud builds submit --tag gcr.io/your-project/document-rag-backend ./backend-python
+gcloud run deploy document-rag-backend \
+  --image gcr.io/your-project/document-rag-backend \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars DATABASE_URL="postgresql://...",REDIS_URL="redis://...",OPENAI_API_KEY="..."
+
+# Deploy frontend
+gcloud builds submit --tag gcr.io/your-project/document-rag-frontend ./frontend-react
+gcloud run deploy document-rag-frontend \
+  --image gcr.io/your-project/document-rag-frontend \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+
+**2. Required GCP Resources:**
+- **Cloud SQL PostgreSQL** with pgvector
+- **Memorystore Redis** for caching
+- **Cloud Run** for containerized apps
+- **Cloud Load Balancing** for traffic
+- **Cloud Monitoring** for observability
+
+#### **Azure Container Instances**
+
+```bash
+# Create resource group
+az group create --name document-rag-rg --location eastus
+
+# Deploy container group
+az container create \
+  --resource-group document-rag-rg \
+  --name document-rag-app \
+  --image your-registry/document-rag-backend:latest \
+  --ports 8000 \
+  --environment-variables \
+    DATABASE_URL="postgresql://..." \
+    REDIS_URL="redis://..." \
+    OPENAI_API_KEY="..." \
+  --cpu 2 \
+  --memory 4
+```
+
+### 🌐 VPS/Server Deployment
+
+#### **Ubuntu/Debian Server Setup**
+
+**1. Server Preparation:**
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker and Docker Compose
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install Nginx
+sudo apt install nginx -y
+```
+
+**2. Application Deployment:**
+```bash
+# Clone and setup
+git clone https://github.com/sudarshantanwer/document-rag-app.git
+cd document-rag-app
+
+# Create production environment
+cp example.env .env.prod
+# Edit with your production values
+
+# Start services
+docker-compose --env-file .env.prod up -d
+
+# Setup Nginx reverse proxy
+sudo nano /etc/nginx/sites-available/document-rag
+```
+
+**3. Nginx Configuration:**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Frontend
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Backend API
+    location /api/ {
+        proxy_pass http://localhost:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Increase timeouts for large file uploads
+        proxy_read_timeout 300;
+        proxy_connect_timeout 300;
+        proxy_send_timeout 300;
+    }
+
+    # WebSocket support (if needed)
+    location /ws {
+        proxy_pass http://localhost:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+**4. SSL Setup with Let's Encrypt:**
+```bash
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx -y
+
+# Get SSL certificate
+sudo certbot --nginx -d your-domain.com
+
+# Enable Nginx
+sudo ln -s /etc/nginx/sites-available/document-rag /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### 🔒 Production Security
+
+#### **Environment Security:**
+```bash
+# Use secrets management
+# AWS: Systems Manager Parameter Store
+# GCP: Secret Manager
+# Azure: Key Vault
+
+# Example with Docker secrets
+echo "your_openai_api_key" | docker secret create openai_api_key -
+echo "your_db_password" | docker secret create db_password -
+```
+
+#### **Network Security:**
+```bash
+# Setup firewall (UFW on Ubuntu)
+sudo ufw allow 22    # SSH
+sudo ufw allow 80    # HTTP
+sudo ufw allow 443   # HTTPS
+sudo ufw deny 8000   # Block direct backend access
+sudo ufw deny 5432   # Block direct database access
+sudo ufw deny 6379   # Block direct Redis access
+sudo ufw enable
+```
+
+#### **Database Security:**
+```sql
+-- Create dedicated database user
+CREATE USER rag_app WITH PASSWORD 'secure_password';
+CREATE DATABASE document_rag OWNER rag_app;
+GRANT CONNECT ON DATABASE document_rag TO rag_app;
+GRANT USAGE, CREATE ON SCHEMA public TO rag_app;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO rag_app;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO rag_app;
+```
+
+### 📊 Production Monitoring
+
+#### **Health Checks:**
+```bash
+# Application health
+curl -f http://localhost:8000/health || exit 1
+
+# Database connectivity
+docker-compose exec backend python -c "from app.db.session import engine; print('DB OK')"
+
+# Redis connectivity
+docker-compose exec redis redis-cli ping
+```
+
+#### **Monitoring Setup:**
+```yaml
+# docker-compose.monitoring.yml
+version: '3.8'
+services:
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+volumes:
+  grafana-storage:
+```
+
+### 🔄 CI/CD Pipeline
+
+#### **GitHub Actions Example:**
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/document-rag-app
+            git pull origin main
+            docker-compose --env-file .env.prod up -d --build
+            docker system prune -f
+```
+
+### 📋 Production Checklist
+
+**Security:**
 - [ ] Set strong database passwords
-- [ ] Configure proper CORS origins
-- [ ] Set up Redis for rate limiting
-- [ ] Configure reverse proxy (Nginx)
-- [ ] Set up SSL certificates
-- [ ] Configure log aggregation
-- [ ] Set up health monitoring
+- [ ] Configure proper CORS origins  
+- [ ] Enable HTTPS/SSL certificates
+- [ ] Setup firewall rules
+- [ ] Use environment secrets management
+- [ ] Enable database connection encryption
+- [ ] Configure rate limiting
+- [ ] Setup API authentication (if needed)
+
+**Performance:**
+- [ ] Setup Redis for caching and rate limiting
+- [ ] Configure database connection pooling
+- [ ] Enable gzip compression
+- [ ] Setup CDN for static assets
+- [ ] Configure auto-scaling
+- [ ] Optimize Docker images
+
+**Reliability:**
+- [ ] Setup health checks
+- [ ] Configure log aggregation (ELK, Grafana)
+- [ ] Setup monitoring and alerting
 - [ ] Configure backup strategy
+- [ ] Test disaster recovery
+- [ ] Setup multi-region deployment (if needed)
+
+**Maintenance:**
+- [ ] Setup automated updates
+- [ ] Configure log rotation
+- [ ] Setup database maintenance jobs
+- [ ] Monitor resource usage
+- [ ] Setup performance profiling
+
+### 🔧 Production Environment Variables
+
+```bash
+# Essential Production Settings
+DATABASE_URL=postgresql+asyncpg://user:password@host:5432/dbname
+REDIS_URL=redis://redis:6379/0
+OPENAI_API_KEY=sk-...
+HUGGINGFACEHUB_API_TOKEN=hf_...
+
+# Performance Settings
+ENABLE_CACHING=true
+ENABLE_RATE_LIMITING=true
+MAX_CONCURRENT_REQUESTS=50
+REDIS_TTL=3600
+
+# Security Settings
+CORS_ORIGINS=["https://yourdomain.com"]
+TRUSTED_HOSTS=["yourdomain.com"]
+ENABLE_HTTPS_REDIRECT=true
+
+# Monitoring
+LOG_LEVEL=INFO
+ENABLE_METRICS=true
+SENTRY_DSN=https://...  # For error tracking
+```
 
 ## 🛠️ Development
 
